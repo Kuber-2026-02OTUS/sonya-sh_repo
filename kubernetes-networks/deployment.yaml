@@ -43,11 +43,9 @@ spec:
             - name: shared-data
               mountPath: /homework
           readinessProbe:
-            exec:
-              command:
-                - test
-                - -f
-                - /homework/index.html
+            httpGet:
+              path: /index.html
+              port: 8000
             initialDelaySeconds: 5
             periodSeconds: 5
           lifecycle:
