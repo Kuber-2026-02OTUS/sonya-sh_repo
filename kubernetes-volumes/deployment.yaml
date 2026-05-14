@@ -42,6 +42,9 @@ spec:
           volumeMounts:
             - name: shared-data
               mountPath: /homework
+            - name: homework-config
+              mountPath: /homework/conf
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /index.html
@@ -57,4 +60,8 @@ spec:
                   - /homework/index.html
       volumes:
         - name: shared-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: homework-pvc
+        - name: homework-config
+          configMap:
+            name: homework-config
