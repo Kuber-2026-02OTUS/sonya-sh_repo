@@ -64,13 +64,13 @@ spec:
               port: 8000
             initialDelaySeconds: 5
             periodSeconds: 5
-          lifecycle:
-            preStop:
-              exec:
-                command:
-                  - rm
-                  - -f
-                  - /homework/index.html
+          # lifecycle:
+          #   preStop:
+          #     exec:
+          #       command:
+          #         - rm
+          #         - -f
+          #         - /homework/index.html
       volumes:
         - name: shared-data
           persistentVolumeClaim:
