@@ -18,6 +18,7 @@ spec:
       labels:
         app: homework
     spec:
+      serviceAccountName: monitoring
       nodeSelector:
         homework: "true"
       initContainers:
@@ -30,6 +31,18 @@ spec:
           volumeMounts:
             - name: shared-data
               mountPath: /init
+        - name: fetch-metrics
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              curl -k --fail -H "Authorization: Bearer $TOKEN" \
+                https://kubernetes.default.svc.cluster.local/metrics > /shared/metrics.html
+          volumeMounts:
+            - name: shared-data
+              mountPath: /shared
       containers:
         - name: web-server
           image: python:3.12-alpine
