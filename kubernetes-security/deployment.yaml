@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homework-deployment
+  namespace: homework
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: homework
+  template:
+    metadata:
+      labels:
+        app: homework
+    spec:
+      serviceAccountName: monitoring
+      nodeSelector:
+        homework: "true"
+      initContainers:
+        - name: init-download
+          image: busybox:latest
+          command:
+            - sh
+            - -c
+            - wget -O /init/index.html https://example.com
+          volumeMounts:
+            - name: shared-data
+              mountPath: /init
+        - name: fetch-metrics
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+              curl -k --fail -H "Authorization: Bearer $TOKEN" \
+                https://kubernetes.default.svc.cluster.local/metrics > /shared/metrics.html
+          volumeMounts:
+            - name: shared-data
+              mountPath: /shared
+      containers:
+        - name: web-server
+          image: python:3.12-alpine
+          command:
+            - sh
+            - -c
+            - python3 -m http.server 8000 --directory /homework
+          ports:
+            - containerPort: 8000
+          volumeMounts:
+            - name: shared-data
+              mountPath: /homework
+            - name: homework-config
+              mountPath: /homework/conf
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          # lifecycle:
+          #   preStop:
+          #     exec:
+          #       command:
+          #         - rm
+          #         - -f
+          #         - /homework/index.html
+      volumes:
+        - name: shared-data
+          persistentVolumeClaim:
+            claimName: homework-pvc
+        - name: homework-config
+          configMap:
+            name: homework-config
