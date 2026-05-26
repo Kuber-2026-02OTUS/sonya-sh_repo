@@ -1,0 +1,9 @@
+Homework application has been deployed.
+
+Namespace: {{ .Values.namespace }}
+Release: {{ .Release.Name }}
+
+Application URLs:
+  http://{{ .Values.ingress.host }}/index.html
+  http://{{ .Values.ingress.host }}/conf/file
+  http://{{ .Values.ingress.host }}/homepage

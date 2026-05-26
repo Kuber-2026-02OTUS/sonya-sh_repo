@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "homework-chart.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "homework-chart.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "homework-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "homework-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: init-download
+          image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
+          command:
+            - sh
+            - -c
+            - echo '<html><body><h1>Homework Helm</h1></body></html>' > /init/index.html
+          volumeMounts:
+            - name: shared-data
+              mountPath: /init
+      containers:
+        - name: web-server
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - sh
+            - -c
+            - python3 -m http.server {{ .Values.service.targetPort }} --directory /homework
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          volumeMounts:
+            - name: shared-data
+              mountPath: /homework
+            - name: config
+              mountPath: /homework/conf
+              readOnly: true
+          {{- if .Values.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              path: /index.html
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.periodSeconds }}
+          {{- end }}
+      volumes:
+        - name: shared-data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: {{ include "homework-chart.fullname" . }}-config

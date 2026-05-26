@@ -1,0 +1,38 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "homework-chart.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "homework-chart.labels" . | nindent 4 }}
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /index.html
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /index.html
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "homework-chart.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+          - path: /conf/file
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "homework-chart.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+          - path: /homepage
+            pathType: Exact
+            backend:
+              service:
+                name: {{ include "homework-chart.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}
