@@ -45,6 +45,13 @@ minio:
 
 singleBinary:
   replicas: 1
+  nodeSelector:
+    node-role: infra
+  tolerations:
+    - key: node-role
+      operator: Equal
+      value: infra
+      effect: NoSchedule
   extraArgs:
     - -config.expand-env=true
   extraEnvFrom:
@@ -56,6 +63,15 @@ singleBinary:
 
 gateway:
   enabled: true
+  nodeSelector:
+    node-role: infra
+  tolerations:
+    - key: node-role
+      operator: Equal
+      value: infra
+      effect: NoSchedule
+  nginxConfig:
+    resolver: "10.96.0.2"
 
 chunksCache:
   enabled: false
