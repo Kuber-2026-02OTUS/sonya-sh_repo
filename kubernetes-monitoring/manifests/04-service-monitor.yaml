@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nginx-app
+  namespace: dz8-monitoring
+  labels:
+    release: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: nginx-app
+  namespaceSelector:
+    matchNames:
+      - dz8-monitoring
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 15s
+
