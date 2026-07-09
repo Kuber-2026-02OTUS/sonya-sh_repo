@@ -1,0 +1,27 @@
+adminUser: admin
+adminPassword: admin
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.logging.svc.cluster.local
+        isDefault: true
+
+service:
+  type: ClusterIP
+
+persistence:
+  enabled: false
+
+nodeSelector:
+  node-role: infra
+
+tolerations:
+  - key: node-role
+    operator: Equal
+    value: infra
+    effect: NoSchedule
