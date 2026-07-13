@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homework-templating
+  namespace: argocd
+spec:
+  project: otus
+  source:
+    repoURL: https://github.com/Kuber-2026-02OTUS/sonya-sh_repo.git
+    targetRevision: kubernetes-gitops
+    path: kubernetes-templating/app-chart
+    helm:
+      releaseName: homework-templating
+      parameters:
+        - name: namespace
+          value: homeworkhelm
+        - name: replicaCount
+          value: "2"
+        - name: ingress.host
+          value: homeworkhelm.otus
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homeworkhelm
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
