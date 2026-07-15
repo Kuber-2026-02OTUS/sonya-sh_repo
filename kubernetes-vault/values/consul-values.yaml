@@ -1,0 +1,27 @@
+global:
+  name: consul
+  datacenter: otus-dc1
+
+server:
+  enabled: true
+  replicas: 3
+  bootstrapExpect: 3
+  storage: 10Gi
+  storageClass: yc-network-hdd
+  disruptionBudget:
+    enabled: true
+    maxUnavailable: 1
+
+client:
+  enabled: true
+
+ui:
+  enabled: true
+  service:
+    type: ClusterIP
+
+connectInject:
+  enabled: false
+
+prometheus:
+  enabled: false
