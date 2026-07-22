@@ -1,0 +1,53 @@
+all:
+  hosts:
+    ks-cp-1:
+      ansible_host: 10.14.0.35
+      ip: 10.14.0.35
+      access_ip: 10.14.0.35
+      ansible_ssh_common_args: '-o ProxyJump=ubuntu@51.250.94.134 -o StrictHostKeyChecking=no'
+    ks-cp-2:
+      ansible_host: 10.14.0.19
+      ip: 10.14.0.19
+      access_ip: 10.14.0.19
+      ansible_ssh_common_args: '-o ProxyJump=ubuntu@51.250.94.134 -o StrictHostKeyChecking=no'
+    ks-cp-3:
+      ansible_host: 51.250.94.134
+      ip: 10.14.0.25
+      access_ip: 10.14.0.25
+    ks-worker-1:
+      ansible_host: 10.14.0.22
+      ip: 10.14.0.22
+      access_ip: 10.14.0.22
+      ansible_ssh_common_args: '-o ProxyJump=ubuntu@51.250.94.134 -o StrictHostKeyChecking=no'
+    ks-worker-2:
+      ansible_host: 10.14.0.7
+      ip: 10.14.0.7
+      access_ip: 10.14.0.7
+      ansible_ssh_common_args: '-o ProxyJump=ubuntu@51.250.94.134 -o StrictHostKeyChecking=no'
+  children:
+    kube_control_plane:
+      hosts:
+        ks-cp-1:
+        ks-cp-2:
+        ks-cp-3:
+    kube_node:
+      hosts:
+        ks-cp-1:
+        ks-cp-2:
+        ks-cp-3:
+        ks-worker-1:
+        ks-worker-2:
+    etcd:
+      hosts:
+        ks-cp-1:
+        ks-cp-2:
+        ks-cp-3:
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}
+  vars:
+    ansible_user: ubuntu
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
