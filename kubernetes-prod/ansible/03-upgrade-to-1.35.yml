@@ -1,0 +1,72 @@
+---
+- name: Upgrade kubeadm cluster from 1.34 to 1.35
+  hosts: kubeadm_cluster
+  become: true
+  serial: 1
+  gather_facts: false
+
+  tasks:
+    - name: Refresh Kubernetes apt key for target minor
+      ansible.builtin.shell: |
+        set -e
+        mkdir -p /etc/apt/keyrings
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubernetes_upgrade_minor }}/deb/Release.key \
+          | gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+      changed_when: false
+
+    - name: Switch Kubernetes apt repository to target minor
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/kubernetes.list
+        mode: "0644"
+        content: |
+          deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubernetes_upgrade_minor }}/deb/ /
+
+    - name: Unhold kubeadm
+      ansible.builtin.dpkg_selections:
+        name: kubeadm
+        selection: install
+
+    - name: Install target kubeadm
+      ansible.builtin.apt:
+        name: kubeadm={{ kubernetes_upgrade_version }}
+        update_cache: true
+        allow_downgrade: true
+        state: present
+
+    - name: Upgrade first control plane
+      ansible.builtin.command: kubeadm upgrade apply {{ kubernetes_upgrade_semver }} -y
+      when: inventory_hostname in groups['control_plane']
+
+    - name: Upgrade worker node config
+      ansible.builtin.command: kubeadm upgrade node
+      when: inventory_hostname in groups['workers']
+
+    - name: Unhold kubelet and kubectl
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: install
+      loop:
+        - kubelet
+        - kubectl
+
+    - name: Install target kubelet and kubectl
+      ansible.builtin.apt:
+        name:
+          - kubelet={{ kubernetes_upgrade_version }}
+          - kubectl={{ kubernetes_upgrade_version }}
+        allow_downgrade: true
+        state: present
+
+    - name: Hold Kubernetes packages again
+      ansible.builtin.dpkg_selections:
+        name: "{{ item }}"
+        selection: hold
+      loop:
+        - kubelet
+        - kubeadm
+        - kubectl
+
+    - name: Restart kubelet
+      ansible.builtin.service:
+        name: kubelet
+        state: restarted
